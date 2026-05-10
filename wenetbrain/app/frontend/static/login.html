@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WenetBrain — Logowanie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-background-primary: #FFFFFF;
+      --color-background-secondary: #F9FAFB;
+      --color-text-primary: #111827;
+      --color-text-secondary: #4B5563;
+      --color-text-tertiary: #6B7280;
+      --color-border-primary: #E5E7EB;
+      --color-border-secondary: #D1D5DB;
+      --color-primary: #111827;
+      --color-primary-hover: #1F2937;
+      --color-primary-foreground: #FFFFFF;
+      --color-accent: #2563EB;
+      --color-danger: #E24B4A;
+      --color-success: #1D9E75;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .login-card {
+      background: white; border-radius: var(--border-radius-lg);
+      padding: 48px; width: 100%; max-width: 400px;
+      border: 1px solid var(--color-border-primary);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+    }
+    .login-logo {
+      font-size: 28px; font-weight: 800; text-align: center;
+      margin-bottom: 8px; color: var(--color-text-primary); letter-spacing: -0.5px;
+    }
+    .login-app {
+      font-size: 13px; font-weight: 600; text-align: center;
+      margin-bottom: 28px; color: var(--color-text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 12px; color: var(--color-text-secondary);
+      margin-bottom: 6px; font-weight: 600; letter-spacing: 0.01em;
+    }
+    .form-group input {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md); font-size: 14px; font-family: inherit;
+      background: white; color: var(--color-text-primary);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input::placeholder { color: var(--color-text-tertiary); }
+    .form-group input:focus {
+      outline: none; border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .btn-primary {
+      width: 100%; padding: 10px; border-radius: var(--border-radius-md);
+      border: 1px solid var(--color-primary); background: var(--color-primary);
+      color: var(--color-primary-foreground); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s, border-color 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+    .btn-primary:active { background: #000000; border-color: #000000; }
+    .error {
+      margin-top: 14px; padding: 10px 12px; border-radius: var(--border-radius-md);
+      background: #FCEBEB; color: #7F1D1D; font-size: 13px; text-align: center;
+      border: 1px solid #F09595; display: none;
+    }
+    .error.show { display: block; }
+    .corner-link {
+      position: fixed; top: 20px; right: 20px;
+      font-size: 12px; color: var(--color-text-secondary);
+      text-decoration: none; padding: 6px 12px;
+      border: 1px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md); background: white;
+      cursor: pointer; transition: all 0.2s;
+      font-weight: 500;
+    }
+    .corner-link:hover {
+      background: var(--color-background-secondary); color: var(--color-text-primary);
+      border-color: var(--color-border-primary);
+    }
+    .corner-link:focus-visible {
+      outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+  </style>
+</head>
+<body>
+  <a class="corner-link" id="admin-link" href="#">Panel admina →</a>
+  <div class="login-card">
+    <div class="login-logo">WenetBrain</div>
+    <div class="login-app" id="app-label">Logowanie</div>
+    <form id="login-form" onsubmit="event.preventDefault(); doLogin();">
+      <div class="form-group">
+        <label for="login-user">Login</label>
+        <input type="text" id="login-user" placeholder="np. admin" autocomplete="username" autofocus>
+      </div>
+      <div class="form-group">
+        <label for="login-pass">Hasło</label>
+        <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary">Zaloguj się</button>
+      <div class="error" id="error-box" role="alert" aria-live="polite">Nieprawidłowe dane logowania</div>
+    </form>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const API = params.get('api') || 'http://localhost:8000';
+    const redirect = params.get('redirect') || '/';
+    const appName = params.get('app') || 'Aplikacja';
+    const tokenKey = params.get('key') || 'wenetbrain_token';
+    const isAdmin = API.includes('8001');
+
+    document.getElementById('app-label').textContent = appName;
+    document.title = 'WenetBrain — ' + appName;
+
+    // Corner link toggles between user and admin login
+    const adminLink = document.getElementById('admin-link');
+    if (isAdmin) {
+      adminLink.textContent = '← Logowanie użytkownika';
+      adminLink.href = '/login.html?api=http://localhost:8000&app=Aplikacja&redirect=/&key=wenetbrain_token';
+    } else {
+      adminLink.textContent = 'Panel admina →';
+      adminLink.href = '/login.html?api=http://localhost:8001&app=Panel+admina&redirect=/&key=wenetbrain_admin_token';
+    }
+
+    // If already logged in, redirect
+    const existing = localStorage.getItem(tokenKey);
+    if (existing) {
+      fetch(API + '/api/auth/me', {headers: {'Authorization': 'Bearer ' + existing}})
+        .then(r => { if (r.ok) location.href = redirect; })
+        .catch(() => {});
+    }
+
+    async function doLogin() {
+      const username = document.getElementById('login-user').value.trim();
+      const password = document.getElementById('login-pass').value;
+      const errBox = document.getElementById('error-box');
+      errBox.classList.remove('show');
+
+      if (!username || !password) {
+        errBox.textContent = 'Wypełnij login i hasło';
+        errBox.classList.add('show');
+        return;
+      }
+
+      try {
+        const body = new URLSearchParams();
+        body.append('username', username);
+        body.append('password', password);
+        const res = await fetch(API + '/api/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: body.toString()
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          errBox.textContent = data.detail || 'Nieprawidłowe dane logowania';
+          errBox.classList.add('show');
+          return;
+        }
+        const data = await res.json();
+        localStorage.setItem(tokenKey, data.access_token);
+        location.href = redirect;
+      } catch (e) {
+        errBox.textContent = 'Błąd połączenia z serwerem';
+        errBox.classList.add('show');
+      }
+    }
+  </script>
+</body>
+</html>

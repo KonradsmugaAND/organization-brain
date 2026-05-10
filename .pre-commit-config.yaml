@@ -1,0 +1,53 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^wenetbrain/(app|admin)/frontend/(dist|node_modules)/
+      - id: end-of-file-fixer
+        exclude: ^wenetbrain/(app|admin)/frontend/(dist|node_modules)/
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+        exclude: ^wenetbrain/(app|admin)/frontend/(dist|node_modules)/
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+        exclude: ^wenetbrain/uploads/
+
+  - repo: local
+    hooks:
+      - id: ruff-lint
+        name: ruff lint
+        entry: bash -c 'cd wenetbrain && uv run ruff check --fix .'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format
+        entry: bash -c 'cd wenetbrain && uv run ruff format .'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: ty-check
+        name: ty type check (advisory)
+        entry: bash -c 'cd wenetbrain && uv run ty check . || true'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: eslint-frontend
+        name: eslint main frontend
+        entry: bash -c 'cd wenetbrain/app/frontend && npm run lint'
+        language: system
+        types_or: [ts, tsx, javascript]
+        pass_filenames: false
+
+      - id: eslint-admin
+        name: eslint admin frontend
+        entry: bash -c 'cd wenetbrain/admin/frontend && npm run lint'
+        language: system
+        types_or: [ts, tsx, javascript]
+        pass_filenames: false

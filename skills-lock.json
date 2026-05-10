@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "fastapi-python": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "fastapi-python/SKILL.md",
+      "computedHash": "1d7346210a6690d2faeb089f074c0dc20a7056c2c83ac1062a11c1b73158be72"
+    },
+    "python-testing": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "python-testing/SKILL.md",
+      "computedHash": "cfbc14bb9f2a95abdd54a464c2fdd066dc01628efcc931b863ed60b5316002f5"
+    },
+    "qdrant": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-java/skills/qdrant/SKILL.md",
+      "computedHash": "24435e951c7dc3c8fc7562a120b6bbe908e6df772bec26f6e5f8c89d1eb79763"
+    },
+    "react-dev": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/development/react-dev/SKILL.md",
+      "computedHash": "4ce3a30e2ad46fdb79f01e0e44701f961c055da7f25f9418af0283a7ad54b791"
+    },
+    "tailwind-v4-shadcn": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tailwind-v4-shadcn/skills/tailwind-v4-shadcn/SKILL.md",
+      "computedHash": "ab5ef62db14cbd7abd213ed669e52303d2cf250e3545c798787a2b9ba58f000c"
+    }
+  }
+}

@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  python-lint:
+    name: Python lint & format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wenetbrain
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install lint extras
+        run: uv sync --extra lint
+
+      - name: ruff lint
+        run: uv run ruff check .
+
+      - name: ruff format check
+        run: uv run ruff format --check .
+
+      - name: codespell
+        run: uv run codespell .
+
+  python-types:
+    name: Python type check (ty)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wenetbrain
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install lint extras
+        run: uv sync --extra lint
+
+      - name: ty check
+        run: uv run ty check .
+        continue-on-error: true  # ty jest w fazie alpha — advisory
+
+  python-tests:
+    name: Python tests (unit + integration)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wenetbrain
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+          - 6334:6334
+    env:
+      QDRANT_URL: http://localhost:6333
+      WENETBRAIN_DB_PATH: /tmp/test_wenetbrain.db
+      GOOGLE_GENAI_USE_VERTEXAI: "False"
+      GOOGLE_CLOUD_PROJECT: wenetbrain-ci
+      EMBEDDING_SIZE: "768"
+      SECRET_KEY: ci-test-secret-key-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Wait for Qdrant
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:6333/readyz && break
+            echo "Waiting for Qdrant... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run pytest
+        run: uv run pytest tests/ -v
+
+  frontend-main:
+    name: Main frontend (TypeScript + ESLint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wenetbrain/app/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: wenetbrain/app/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc -b --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  frontend-admin:
+    name: Admin frontend (TypeScript + ESLint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wenetbrain/admin/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: wenetbrain/admin/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc -b --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

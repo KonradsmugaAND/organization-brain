@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WenetBrain Admin</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F9FAFB;
+      --bg-tertiary: #F3F4F6;
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-tertiary: #9CA3AF;
+      --border-primary: #E5E7EB;
+      --border-secondary: #D1D5DB;
+      --accent: #378ADD;
+      --accent-hover: #2D6FC7;
+      --success: #1D9E75;
+      --warning: #F59E0B;
+      --danger: #E24B4A;
+      --info: #6366F1;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .hidden { display: none !important; }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: 100vh;
+    }
+    .sidebar {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-primary);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .sidebar-user {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+    .main-col {
+      overflow: auto;
+      padding: 20px;
+    }
+    .main-col + .main-col {
+      border-left: 1px solid var(--border-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--border-secondary); background: var(--bg-tertiary); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-ghost { background: transparent; border-color: transparent; }
+    .btn-ghost:hover { background: var(--bg-tertiary); }
+
+    /* Card */
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-primary);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Tree */
+    .tree { font-size: 13px; }
+    .tree-node {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      gap: 4px;
+    }
+    .tree-node:hover { background: var(--bg-tertiary); }
+    .tree-node.selected { background: rgba(55,138,221,0.1); color: var(--accent); }
+    .tree-toggle {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-tertiary);
+      transition: transform 0.15s;
+    }
+    .tree-toggle.expanded { transform: rotate(90deg); }
+    .tree-icon { font-size: 16px; margin-right: 4px; }
+    .tree-children { padding-left: 18px; display: none; }
+    .tree-children.open { display: block; }
+    .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree-actions { display: none; gap: 4px; }
+    .tree-node:hover .tree-actions { display: flex; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: 60px 20px;
+      font-size: 14px;
+    }
+
+    /* Forms */
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.08);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 20px;
+    }
+    .modal-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      width: 100%; max-width: 440px;
+      max-height: 90vh; overflow: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border-primary);
+    }
+    .modal-title { font-size: 15px; font-weight: 600; }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px; }
+    .modal-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+      padding: 12px 20px; border-top: 1px solid var(--border-primary);
+    }
+
+    /* Table */
+    .table-wrap { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-primary); }
+    th { color: var(--text-secondary); font-weight: 500; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Pills */
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .pill-company { background: #DBEAFE; color: #1E40AF; }
+    .pill-team { background: #D1FAE5; color: #065F46; }
+    .pill-group { background: #E0E7FF; color: #3730A3; }
+    .pill-private { background: #FEF3C7; color: #92400E; }
+    .pill-member { background: var(--bg-tertiary); color: var(--text-secondary); }
+    .pill-editor { background: #DBEAFE; color: #1E40AF; }
+    .pill-manager { background: #D1FAE5; color: #065F46; }
+    .pill-admin { background: #FEF3C7; color: #92400E; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      padding: 10px 16px; border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500; color: #fff;
+      box-shadow: var(--shadow-md); z-index: 200;
+      animation: slideIn 0.25s ease;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--info); }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Note item */
+    .note-item {
+      padding: 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      margin-bottom: 10px;
+    }
+    .note-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .note-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .note-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div id="app-layout" class="layout hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">WenetBrain Admin</div>
+      <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:16px;">Zarządzanie przestrzeniami i użytkownikami</div>
+      <div class="sidebar-user">
+        <span id="current-user-name">—</span>
+        <button class="btn btn-sm" onclick="logout()">Wyloguj</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Left: Space Tree -->
+      <div class="main-col">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Przestrzenie</div>
+            <div class="card-subtitle">Kliknij aby zobaczyć szczegóły</div>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="openSpaceModal()">
+            <span class="material-icons-outlined" style="font-size:14px">add</span> Nowa
+          </button>
+        </div>
+        <div id="space-tree" class="tree"></div>
+      </div>
+
+      <!-- Right: Space Details -->
+      <div class="main-col" id="space-details">
+        <div class="empty-state">
+          <span class="material-icons-outlined" style="font-size:40px;color:var(--text-tertiary)">account_tree</span>
+          <div style="margin-top:12px;">Wybierz przestrzeń z drzewa po lewej,<br>aby zobaczyć użytkowników, uprawnienia i notatki.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Space Modal -->
+  <div id="space-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeSpaceModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Nowa przestrzeń</span>
+        <span class="material-icons-outlined modal-close" onclick="closeSpaceModal()">close</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nazwa</label>
+          <input type="text" id="s-name" placeholder="np. Zespół Product">
+        </div>
+        <div class="form-group">
+          <label>Typ</label>
+          <select id="s-type" onchange="onSpaceTypeChange()">
+            <option value="company">Firma</option>
+            <option value="team" selected>Zespół</option>
+            <option value="group">Grupa</option>
+            <option value="private">Prywatna</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rodzic (opcjonalnie)</label>
+          <select id="s-parent"><option value="">— Brak (root) —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Bank ID (automatycznie lub własny)</label>
+          <input type="text" id="s-bank-id" placeholder="np. team_product">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeSpaceModal()">Anuluj</button>
+        <button class="btn btn-primary" onclick="saveSpace()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note Modal -->
+  <div id="note-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeNoteModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Dodaj notatkę</span>
+        <span class="material-icons-outlined modal-close" onclick="closeNoteModal()">close</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tytuł</label>
+          <input type="text" id="n-title" placeholder="Tytuł notatki">
+        </div>
+        <div class="form-group">
+          <label>Treść</label>
+          <textarea id="n-body" rows="5" placeholder="Treść notatki..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeNoteModal()">Anuluj</button>
+        <button class="btn btn-primary" onclick="saveNote()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────
+    const API = '';
+    let token = localStorage.getItem('wenetbrain_admin_token');
+    let spaces = [];
+    let selectedSpace = null;
+    let expandedNodes = new Set();
+
+    // ── Auth ────────────────────────────────────────────────
+    function setToken(t) {
+      token = t;
+      if (t) localStorage.setItem('wenetbrain_admin_token', t);
+      else localStorage.removeItem('wenetbrain_admin_token');
+    }
+    function logout() {
+      setToken(null);
+      window.location.href = '/login.html';
+    }
+    async function api(path, opts = {}) {
+      opts.headers = opts.headers || {};
+      if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+      if (opts.body && typeof opts.body === 'string') opts.headers['Content-Type'] = 'application/json';
+      const res = await fetch(API + path, opts);
+      if (res.status === 401) { setToken(null); logout(); return; }
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'HTTP ' + res.status);
+      }
+      if (res.status === 204) return {};
+      return await res.json();
+    }
+
+    // ── Init ────────────────────────────────────────────────
+    async function initApp() {
+      try {
+        const me = await api('/api/auth/me');
+        document.getElementById('current-user-name').textContent = me.name || me.id;
+      } catch (e) { setToken(null); logout(); return; }
+      document.getElementById('app-layout').classList.remove('hidden');
+      await loadSpaces();
+    }
+    if (!token) { logout(); } else { initApp(); }
+
+    // ── Spaces & Tree ───────────────────────────────────────
+    async function loadSpaces() {
+      try {
+        spaces = await api('/api/spaces') || [];
+        renderTree();
+        populateParentSelect();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function buildTree(flat) {
+      const map = new Map(flat.map(s => ({ ...s, children: [] })).map(s => [s.id, s]));
+      const roots = [];
+      for (const s of map.values()) {
+        if (s.parent_id && map.has(s.parent_id)) {
+          map.get(s.parent_id).children.push(s);
+        } else {
+          roots.push(s);
+        }
+      }
+      return roots;
+    }
+
+    function getSpaceIcon(type) {
+      if (type === 'company') return 'corporate_fare';
+      if (type === 'team') return 'groups';
+      if (type === 'private') return 'person';
+      return 'folder';
+    }
+
+    function renderTree() {
+      const tree = buildTree(spaces);
+      const container = document.getElementById('space-tree');
+      container.innerHTML = tree.map(n => renderNode(n)).join('');
+    }
+
+    function renderNode(node) {
+      const hasChildren = node.children && node.children.length;
+      const isExpanded = expandedNodes.has(node.id);
+      const isSelected = selectedSpace && selectedSpace.id === node.id;
+      const icon = getSpaceIcon(node.space_type);
+      const pillClass = 'pill-' + node.space_type;
+
+      let html = `<div>`;
+      html += `<div class="tree-node ${isSelected ? 'selected' : ''}" data-id="${node.id}">`;
+      if (hasChildren) {
+        html += `<span class="tree-toggle ${isExpanded ? 'expanded' : ''}" onclick="toggleNode(event,'${node.id}')"><span class="material-icons-outlined" style="font-size:14px">chevron_right</span></span>`;
+      } else {
+        html += `<span style="width:18px;display:inline-block;"></span>`;
+      }
+      html += `<span class="material-icons-outlined tree-icon" style="color:var(--text-tertiary)">${icon}</span>`;
+      html += `<span class="tree-label" onclick="selectSpace('${node.id}')">${escapeHtml(node.name)}</span>`;
+      html += `<span class="pill ${pillClass}">${node.space_type}</span>`;
+      html += `<span class="tree-actions">`;
+      html += `<span class="material-icons-outlined" style="font-size:14px;color:var(--danger);cursor:pointer;" onclick="deleteSpace(event,'${node.id}')" title="Usuń">delete</span>`;
+      html += `</span>`;
+      html += `</div>`;
+
+      if (hasChildren && isExpanded) {
+        html += `<div class="tree-children open">`;
+        for (const child of node.children) {
+          html += renderNode(child);
+        }
+        html += `</div>`;
+      } else if (hasChildren) {
+        html += `<div class="tree-children" id="children-${node.id}"></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function toggleNode(e, id) {
+      e.stopPropagation();
+      if (expandedNodes.has(id)) {
+        expandedNodes.delete(id);
+      } else {
+        expandedNodes.add(id);
+      }
+      renderTree();
+    }
+
+    async function selectSpace(id) {
+      selectedSpace = spaces.find(s => s.id === id);
+      renderTree();
+      await renderSpaceDetails();
+    }
+
+    async function renderSpaceDetails() {
+      if (!selectedSpace) return;
+      const s = selectedSpace;
+      const container = document.getElementById('space-details');
+
+      let html = '';
+
+      // Space info card
+      html += `<div class="card">`;
+      html += `<div class="card-header"><div><div class="card-title">${escapeHtml(s.name)}</div><div class="card-subtitle">${s.bank_id}</div></div><span class="pill pill-${s.space_type}">${s.space_type}</span></div>`;
+      html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${escapeHtml(s.description || '—')}</div>`;
+      html += `<div style="display:flex;gap:8px;">`;
+      html += `<button class="btn btn-sm btn-primary" onclick="openNoteModal()"><span class="material-icons-outlined" style="font-size:14px">note_add</span> Dodaj notatkę</button>`;
+      html += `</div>`;
+      html += `</div>`;
+
+      // Users card
+      html += `<div class="card">`;
+      html += `<div class="card-title">Użytkownicy i uprawnienia</div>`;
+      html += `<div id="space-users-table" class="table-wrap"><div style="font-size:12px;color:var(--text-tertiary);padding:12px 0;">Ładowanie...</div></div>`;
+      html += `</div>`;
+
+      // Notes card
+      html += `<div class="card">`;
+      html += `<div class="card-title">Notatki w tej przestrzeni</div>`;
+      html += `<div id="space-notes-list"><div style="font-size:12px;color:var(--text-tertiary);padding:12px 0;">Ładowanie...</div></div>`;
+      html += `</div>`;
+
+      container.innerHTML = html;
+
+      // Load users and notes in parallel
+      loadSpaceUsers(s.bank_id);
+      loadSpaceNotes(s.bank_id);
+    }
+
+    async function loadSpaceUsers(bankId) {
+      try {
+        const users = await api('/api/spaces/' + bankId + '/users');
+        const container = document.getElementById('space-users-table');
+        if (!users.length) {
+          container.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0;">Brak użytkowników w tej przestrzeni</div>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Użytkownik</th><th>Rola ACL</th><th></th></tr></thead><tbody>';
+        for (const u of users) {
+          html += `<tr>`;
+          html += `<td><div style="font-weight:500;">${escapeHtml(u.name || u.id)}</div><div style="font-size:11px;color:var(--text-tertiary)">${escapeHtml(u.email || '')}</div></td>`;
+          html += `<td><span class="pill pill-${u.acl_role}">${u.acl_role}</span></td>`;
+          html += `<td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="removeACL('${u.id}','${bankId}')">Usuń</button></td>`;
+          html += `</tr>`;
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadSpaceNotes(bankId) {
+      try {
+        const notes = await api('/api/spaces/' + bankId + '/notes');
+        const container = document.getElementById('space-notes-list');
+        if (!notes.length) {
+          container.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0;">Brak notatek w tej przestrzeni</div>';
+          return;
+        }
+        let html = '';
+        for (const n of notes) {
+          html += `<div class="note-item">`;
+          html += `<div class="note-title">${escapeHtml(n.title || 'Bez tytułu')}</div>`;
+          html += `<div class="note-text">${escapeHtml(n.text || '').substring(0, 200)}${(n.text || '').length > 200 ? '...' : ''}</div>`;
+          html += `<div class="note-meta">${escapeHtml(n.user_id || '')} • ${n.created_at ? new Date(n.created_at).toLocaleString('pl-PL') : ''}</div>`;
+          html += `</div>`;
+        }
+        container.innerHTML = html;
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── Space Modal ─────────────────────────────────────────
+    function openSpaceModal() {
+      document.getElementById('space-modal').classList.remove('hidden');
+      document.getElementById('s-name').value = '';
+      document.getElementById('s-bank-id').value = '';
+      document.getElementById('s-type').value = 'team';
+      document.getElementById('s-parent').value = selectedSpace ? selectedSpace.id : '';
+      onSpaceTypeChange();
+    }
+    function closeSpaceModal() { document.getElementById('space-modal').classList.add('hidden'); }
+
+    function onSpaceTypeChange() {
+      const type = document.getElementById('s-type').value;
+      const name = document.getElementById('s-name').value.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (name) {
+        document.getElementById('s-bank-id').placeholder = type + '_' + name;
+      }
+    }
+    document.getElementById('s-name')?.addEventListener('input', onSpaceTypeChange);
+
+    function populateParentSelect() {
+      const sel = document.getElementById('s-parent');
+      let html = '<option value="">— Brak (root) —</option>';
+      for (const s of spaces) {
+        html += `<option value="${s.id}">${escapeHtml(s.name)} (${s.space_type})</option>`;
+      }
+      sel.innerHTML = html;
+    }
+
+    async function saveSpace() {
+      const name = document.getElementById('s-name').value.trim();
+      const type = document.getElementById('s-type').value;
+      let bankId = document.getElementById('s-bank-id').value.trim();
+      const parentId = document.getElementById('s-parent').value || null;
+      if (!name) { showToast('Podaj nazwę przestrzeni', 'error'); return; }
+      if (!bankId) {
+        const slug = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        bankId = type + '_' + slug;
+      }
+      try {
+        await api('/api/spaces', {
+          method: 'POST',
+          body: JSON.stringify({ space_id: bankId, name, bank_id: bankId, space_type: type, parent_id: parentId })
+        });
+        showToast('Przestrzeń dodana', 'success');
+        closeSpaceModal();
+        await loadSpaces();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteSpace(e, id) {
+      e.stopPropagation();
+      const s = spaces.find(x => x.id === id);
+      if (!confirm('Usunąć przestrzeń ' + (s ? s.name : id) + '?')) return;
+      try {
+        await api('/api/spaces/' + id, { method: 'DELETE' });
+        if (selectedSpace && selectedSpace.id === id) selectedSpace = null;
+        showToast('Usunięto', 'success');
+        await loadSpaces();
+        if (!selectedSpace) {
+          document.getElementById('space-details').innerHTML = `
+            <div class="empty-state">
+              <span class="material-icons-outlined" style="font-size:40px;color:var(--text-tertiary)">account_tree</span>
+              <div style="margin-top:12px;">Wybierz przestrzeń z drzewa po lewej,<br>aby zobaczyć użytkowników, uprawnienia i notatki.</div>
+            </div>`;
+        }
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function removeACL(userId, bankId) {
+      if (!confirm('Usunąć uprawnienie użytkownika z tej przestrzeni?')) return;
+      try {
+        await api('/api/users/' + userId + '/acl/' + bankId, { method: 'DELETE' });
+        showToast('Usunięto', 'success');
+        if (selectedSpace) loadSpaceUsers(selectedSpace.bank_id);
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── Note Modal ──────────────────────────────────────────
+    function openNoteModal() {
+      if (!selectedSpace) return;
+      document.getElementById('note-modal').classList.remove('hidden');
+      document.getElementById('n-title').value = '';
+      document.getElementById('n-body').value = '';
+    }
+    function closeNoteModal() { document.getElementById('note-modal').classList.add('hidden'); }
+
+    async function saveNote() {
+      if (!selectedSpace) return;
+      const title = document.getElementById('n-title').value.trim();
+      const body = document.getElementById('n-body').value.trim();
+      if (!title) { showToast('Podaj tytuł', 'error'); return; }
+      try {
+        await api('/api/spaces/' + selectedSpace.bank_id + '/notes', {
+          method: 'POST',
+          body: JSON.stringify({ title, content: body })
+        });
+        showToast('Notatka zapisana', 'success');
+        closeNoteModal();
+        loadSpaceNotes(selectedSpace.bank_id);
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── Utilities ───────────────────────────────────────────
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function showToast(message, type = 'info') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.textContent = message;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

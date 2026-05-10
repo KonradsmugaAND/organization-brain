@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WenetBrain — Organizational Second Brain</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    :root {
+      --color-background-primary: #FFFFFF;
+      --color-background-secondary: #F9FAFB;
+      --color-text-primary: #111827;
+      --color-text-secondary: #4B5563;
+      --color-text-tertiary: #9CA3AF;
+      --color-border-primary: #E5E7EB;
+      --color-border-secondary: #D1D5DB;
+      --color-border-tertiary: #F3F4F6;
+      --bank-priv-bg: #FAECE7; --bank-priv-text: #712B13;
+      --bank-team-bg: #E1F5EE; --bank-team-text: #085041;
+      --bank-comp-bg: #E6F1FB; --bank-comp-text: #0C447C;
+      --bank-group-bg: #EEEDFE; --bank-group-text: #3C3489;
+      --color-record: #E24B4A;
+      --color-accent: #378ADD;
+      --color-danger: #E24B4A;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: 44px 1fr;
+      height: 100vh;
+    }
+
+    .topbar {
+      grid-column: 1 / 3;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      border-bottom: 0.5px solid var(--color-border-primary);
+      background: var(--color-background-secondary);
+      z-index: 10;
+    }
+    .topbar-logo { font-size: 14px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.3px; }
+    .topbar-badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px;
+      background: var(--bank-group-bg); color: var(--bank-group-text);
+      border: 0.5px solid var(--bank-group-text);
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-btn {
+      font-size: 12px; padding: 4px 12px; border-radius: var(--border-radius-md);
+      border: 0.5px solid var(--color-border-secondary); background: white;
+      color: var(--color-text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-btn:hover { background: var(--color-background-secondary); }
+    .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-record); }
+    .rec-dot.pulse { animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .sidebar {
+      border-right: 0.5px solid var(--color-border-primary);
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: var(--color-background-secondary);
+      overflow-y: auto;
+    }
+    .nav-section {
+      font-size: 10px; color: var(--color-text-tertiary);
+      padding: 8px 8px 4px; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+      border-radius: var(--border-radius-md); cursor: pointer;
+      font-size: 13px; color: var(--color-text-secondary); text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-item .material-icons-outlined { font-size: 16px; color: var(--color-text-secondary); }
+    .nav-item:hover { background: white; }
+    .nav-item.active { background: white; color: var(--color-text-primary); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .space-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .badge-num { margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 8px; background: #FFEBEE; color: #C62828; }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      overflow: hidden;
+      background: var(--color-background-primary);
+    }
+
+    .content {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .tab-row {
+      display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-primary);
+      margin-bottom: 12px;
+    }
+    .tab {
+      font-size: 12px; padding: 8px 16px; cursor: pointer;
+      color: var(--color-text-secondary); border-bottom: 2px solid transparent;
+    }
+    .tab.active { color: var(--color-text-primary); font-weight: 500; border-bottom-color: var(--color-text-primary); }
+
+    .section-title { font-size: 11px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .card {
+      background: var(--color-background-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 12px 16px;
+      border: 0.5px solid var(--color-border-primary);
+      margin-bottom: 12px;
+    }
+    .card-row { display: flex; align-items: flex-start; gap: 12px; }
+    .bank-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 6px;
+    }
+    .bp-priv { background: var(--bank-priv-bg); color: var(--bank-priv-text); }
+    .bp-team { background: var(--bank-team-bg); color: var(--bank-team-text); }
+    .bp-comp { background: var(--bank-comp-bg); color: var(--bank-comp-text); }
+    .bp-group { background: var(--bank-group-bg); color: var(--bank-group-text); }
+
+    .card-title-txt { font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin: 4px 0; }
+    .card-body { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; line-height: 1.6; }
+    .card-meta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 8px; }
+
+    .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .act-btn {
+      font-size: 11px; padding: 4px 10px; border-radius: 10px;
+      border: 0.5px solid var(--color-border-secondary); background: white;
+      color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s;
+    }
+    .act-btn:hover { opacity: 0.85; }
+    .act-btn.approve { border-color: #5DCAA5; color: #085041; background: #E1F5EE; }
+    .act-btn.reject { border-color: #F09595; color: #791F1F; background: #FCEBEB; }
+    .act-btn.clickup { border-color: #85B7EB; color: #0C447C; background: #E6F1FB; }
+    .act-btn.primary { border-color: var(--color-accent); color: white; background: var(--color-accent); }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; font-weight: 500; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 8px; border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md); font-size: 13px; font-family: inherit;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none; border-color: var(--color-accent);
+    }
+
+    .chat-area {
+      border-left: 0.5px solid var(--color-border-primary);
+      display: flex; flex-direction: column;
+      background: var(--color-background-primary);
+    }
+    .chat-header {
+      padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-primary);
+      font-size: 13px; font-weight: 600; color: var(--color-text-primary);
+      background: var(--color-background-secondary);
+    }
+    .chat-messages {
+      flex: 1; padding: 16px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg { font-size: 13px; line-height: 1.5; padding: 8px 12px; border-radius: var(--border-radius-md); max-width: 90%; }
+    .msg-user { background: #E6F1FB; color: #0C447C; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg-ai { background: var(--color-background-secondary); color: var(--color-text-primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 0.5px solid var(--color-border-primary); }
+    .msg-source { font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px; display: block; }
+
+    .chat-input {
+      padding: 16px; border-top: 0.5px solid var(--color-border-primary);
+      display: flex; gap: 8px; background: white;
+    }
+    .chat-input input {
+      flex: 1; font-size: 13px; padding: 8px 12px;
+      border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary);
+      background: var(--color-background-secondary); color: var(--color-text-primary);
+    }
+    .chat-input button {
+      padding: 8px 12px; border-radius: var(--border-radius-md);
+      border: 0.5px solid var(--color-border-secondary); background: white;
+      color: var(--color-text-primary); cursor: pointer; font-size: 13px;
+    }
+
+    .hidden { display: none !important; }
+    .upload-zone {
+      border: 2px dashed var(--color-border-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      text-align: center;
+      color: var(--color-text-tertiary);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-zone:hover { border-color: var(--color-accent); color: var(--color-accent); }
+    .recording-timer { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-record); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat-card { text-align: center; padding: 16px; }
+    .stat-value { font-size: 24px; font-weight: 700; color: var(--color-accent); }
+    .stat-label { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+    .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .table th { text-align: left; padding: 8px; border-bottom: 0.5px solid var(--color-border-primary); color: var(--color-text-tertiary); font-weight: 600; }
+    .table td { padding: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--color-text-primary); color: white;
+      padding: 10px 16px; border-radius: var(--border-radius-md);
+      font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <!-- APP LAYOUT -->
+  <div id="app-layout" class="layout hidden">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-logo">WenetBrain</span>
+      <span class="topbar-badge">WebWave · Zespół Product</span>
+      <div class="topbar-spacer"></div>
+      <button class="topbar-btn" id="rec-btn" onclick="toggleRecording()"><span class="rec-dot" id="rec-dot"></span><span id="rec-text">Nagraj spotkanie</span></button>
+      <span class="topbar-btn" id="current-user-display">—</span>
+      <button class="topbar-btn" onclick="logout()">Wyloguj</button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section">Przestrzenie</div>
+      <a class="nav-item" onclick="showTab('dashboard', this)">
+        <span class="space-dot" style="background:#3C3489"></span> WeNet Group
+      </a>
+      <a class="nav-item" onclick="showTab('dashboard', this)">
+        <span class="space-dot" style="background:#185FA5"></span> WebWave
+      </a>
+      <a class="nav-item active" onclick="showTab('dashboard', this)">
+        <span class="space-dot" style="background:#1D9E75"></span> Zespół Product
+      </a>
+      <a class="nav-item" onclick="showTab('dashboard', this)">
+        <span class="space-dot" style="background:#993C1D"></span> Prywatna
+      </a>
+
+      <div class="nav-section" style="margin-top:16px">Nawigacja</div>
+      <a class="nav-item" onclick="showTab('inbox', this)">
+        <span class="material-icons-outlined">notifications</span> Inbox <span class="badge-num" id="inbox-badge">0</span>
+      </a>
+      <a class="nav-item" onclick="showTab('notes', this)">
+        <span class="material-icons-outlined">description</span> Notatki
+      </a>
+      <a class="nav-item" onclick="showTab('meeting', this)">
+        <span class="material-icons-outlined">mic</span> Nowe spotkanie
+      </a>
+      <a class="nav-item" onclick="showTab('search', this)">
+        <span class="material-icons-outlined">search</span> Wyszukaj wiedzę
+      </a>
+
+      <div class="nav-section" style="margin-top:16px">Administracja</div>
+      <a class="nav-item" onclick="showTab('admin', this)">
+        <span class="material-icons-outlined">admin_panel_settings</span> Panel admina
+      </a>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <!-- CONTENT AREA -->
+      <div class="content">
+        <div class="tab-row">
+          <span class="tab active" id="tab-indicator-inbox">Inbox</span>
+          <span class="tab" id="tab-indicator-notes">Notatki</span>
+          <span class="tab" id="tab-indicator-meeting">Spotkania</span>
+          <span class="tab" id="tab-indicator-search">Wyszukiwanie</span>
+          <span class="tab hidden" id="tab-indicator-admin">Admin</span>
+        </div>
+
+        <!-- Inbox Tab -->
+        <div id="tab-inbox" class="tab-content">
+          <div class="section-title">Do zatwierdzenia</div>
+          <div id="inbox-list">
+            <p style="color:var(--color-text-tertiary); padding:20px;">Ładowanie inboxu...</p>
+          </div>
+        </div>
+
+        <!-- Notes Tab -->
+        <div id="tab-notes" class="tab-content hidden">
+          <div class="section-title">Twoja baza wiedzy</div>
+          <div id="notes-list">
+            <p style="color:var(--color-text-tertiary); padding:20px;">Ładowanie notatek...</p>
+          </div>
+        </div>
+
+        <!-- Meeting Tab -->
+        <div id="tab-meeting" class="tab-content hidden">
+          <div class="section-title">Nowe spotkanie</div>
+          <div class="card" style="max-width:640px;">
+            <div class="form-group">
+              <label>Tytuł spotkania</label>
+              <input type="text" id="m-title" placeholder="np. Sprint Planning Q2">
+            </div>
+            <div class="form-group">
+              <label>Typ spotkania</label>
+              <select id="m-type">
+                <option value="team">Zespół (team)</option>
+                <option value="cross">Międzyzespołowe (cross)</option>
+                <option value="oneonone">1:1 (oneonone)</option>
+                <option value="allhands">All-hands</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Uczestnicy (oddziel przecinkami)</label>
+              <input type="text" id="m-participants" placeholder="Anna Kowalska, Marek Wójcik">
+            </div>
+
+            <div class="form-group">
+              <label>Źródło</label>
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <button class="act-btn primary" id="btn-source-text" onclick="setMeetingSource('text')">Wklej transkrypcję</button>
+                <button class="act-btn" id="btn-source-upload" onclick="setMeetingSource('upload')">Upload pliku</button>
+                <button class="act-btn" id="btn-source-record" onclick="setMeetingSource('record')">Nagranie audio</button>
+              </div>
+            </div>
+
+            <div id="source-text">
+              <div class="form-group">
+                <label>Transkrypcja tekstowa</label>
+                <textarea id="m-transcript" rows="6" placeholder="Wklej tutaj transkrypcję spotkania..."></textarea>
+              </div>
+            </div>
+
+            <div id="source-upload" class="hidden">
+              <div class="form-group">
+                <label>Upload pliku audio (.wav, .mp3) lub tekstowego (.txt)</label>
+                <input type="file" id="m-file" accept=".wav,.mp3,.m4a,.txt" style="padding:8px 0;">
+              </div>
+            </div>
+
+            <div id="source-record" class="hidden">
+              <div class="form-group">
+                <label>Nagranie audio</label>
+                <div class="upload-zone" onclick="toggleRecording()">
+                  <span class="material-icons-outlined" style="font-size:32px">mic</span>
+                  <div style="margin-top:8px; font-size:13px; font-weight:500;">Kliknij aby rozpocząć nagrywanie</div>
+                  <div style="margin-top:4px; font-size:11px;">Maksymalnie 25 MB, formaty: WAV, MP3, M4A</div>
+                </div>
+                <div id="recording-status" style="margin-top:8px; text-align:center; display:none;">
+                  <div class="recording-timer" id="rec-timer">00:00</div>
+                  <div style="font-size:11px; color:var(--color-text-tertiary)">Nagrywanie w toku... Kliknij przycisk w topbarze aby zatrzymać.</div>
+                </div>
+                <audio id="recorded-audio" controls style="width:100%; margin-top:8px; display:none;"></audio>
+              </div>
+            </div>
+
+            <button class="act-btn primary" style="width:100%; padding:8px" onclick="submitMeeting()">Przetwórz spotkanie przez AI</button>
+            <pre id="m-result" style="margin-top:12px; font-size:11px; color:var(--color-text-secondary); white-space: pre-wrap;"></pre>
+          </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="tab-search" class="tab-content hidden">
+           <div class="chat-input" style="margin-bottom:20px; border: 0.5px solid var(--color-border-primary); border-radius: var(--border-radius-md)">
+            <input type="text" id="search-input" placeholder="Wyszukaj w pamięci organizacyjnej..." onkeydown="if(event.key==='Enter')doSearch()">
+            <button onclick="doSearch()">Szukaj</button>
+          </div>
+          <div id="search-results"></div>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="tab-admin" class="tab-content hidden">
+          <div class="section-title">Panel administracyjny</div>
+
+          <div class="stats-grid" style="margin-bottom:20px;">
+            <div class="card stat-card">
+              <div class="stat-value" id="stat-users">—</div>
+              <div class="stat-label">Użytkownicy</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-value" id="stat-meetings">—</div>
+              <div class="stat-label">Spotkania</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-value" id="stat-inbox-pending">—</div>
+              <div class="stat-label">Do zatwierdzenia</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-value" id="stat-inbox-total">—</div>
+              <div class="stat-label">Wszystkie inbox</div>
+            </div>
+          </div>
+
+          <div class="section-title">Dodaj użytkownika</div>
+          <div class="card" style="max-width:600px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label>ID użytkownika</label>
+                <input type="text" id="u-id" placeholder="user-001">
+              </div>
+              <div class="form-group">
+                <label>Imię i nazwisko</label>
+                <input type="text" id="u-name" placeholder="Jan Kowalski">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="u-email" placeholder="jan@webwave.pl">
+              </div>
+              <div class="form-group">
+                <label>Rola</label>
+                <select id="u-role">
+                  <option value="member">Member</option>
+                  <option value="editor">Editor</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Zespół</label>
+                <input type="text" id="u-team" placeholder="Product">
+              </div>
+              <div class="form-group">
+                <label>Firma</label>
+                <input type="text" id="u-company" value="webwave">
+              </div>
+            </div>
+            <button class="act-btn primary" style="margin-top:8px;" onclick="createUser()">Dodaj użytkownika</button>
+          </div>
+
+          <div class="section-title" style="margin-top:20px">Lista użytkowników</div>
+          <div id="users-list">
+            <p style="color:var(--color-text-tertiary); padding:12px;">Ładowanie...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT AREA -->
+      <div class="chat-area">
+        <div class="chat-header">Czat · Zespół Product</div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg msg-ai">
+            Witaj w WenetBrain. Jestem Twoim asystentem wiedzy organizacyjnej. W czym mogę Ci pomóc?
+          </div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="Zapytaj o coś..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button onclick="sendChat()">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = 'http://localhost:8000';
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordingInterval = null;
+    let recordingSeconds = 0;
+    let meetingSource = 'text';
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function showTab(id, element) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + id).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if (element) element.classList.add('active');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const indicator = document.getElementById('tab-indicator-' + id);
+      if(indicator) {
+        indicator.classList.add('active');
+        indicator.classList.remove('hidden');
+      }
+      ['inbox','notes','meeting','search','admin'].forEach(t => {
+        const el = document.getElementById('tab-indicator-' + t);
+        if (el && t !== id) el.classList.add('hidden');
+      });
+
+      if (id === 'inbox') loadInbox();
+      if (id === 'admin') loadAdmin();
+      if (id === 'notes') loadNotes();
+    }
+
+    function setMeetingSource(src) {
+      meetingSource = src;
+      document.getElementById('source-text').classList.toggle('hidden', src !== 'text');
+      document.getElementById('source-upload').classList.toggle('hidden', src !== 'upload');
+      document.getElementById('source-record').classList.toggle('hidden', src !== 'record');
+      document.getElementById('btn-source-text').classList.toggle('primary', src === 'text');
+      document.getElementById('btn-source-upload').classList.toggle('primary', src === 'upload');
+      document.getElementById('btn-source-record').classList.toggle('primary', src === 'record');
+    }
+
+    // ── Recording ───────────────────────────────────────────
+    async function toggleRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const audio = document.getElementById('recorded-audio');
+          audio.src = url;
+          audio.style.display = 'block';
+          document.getElementById('recording-status').style.display = 'none';
+          document.getElementById('rec-dot').classList.remove('pulse');
+          document.getElementById('rec-text').textContent = 'Nagraj spotkanie';
+          clearInterval(recordingInterval);
+          stream.getTracks().forEach(t => t.stop());
+          showToast('Nagranie zapisane. Możesz je przetworzyć.');
+        };
+        mediaRecorder.start();
+        recordingSeconds = 0;
+        document.getElementById('recording-status').style.display = 'block';
+        document.getElementById('rec-dot').classList.add('pulse');
+        document.getElementById('rec-text').textContent = 'Zatrzymaj nagrywanie';
+        recordingInterval = setInterval(() => {
+          recordingSeconds++;
+          const m = String(Math.floor(recordingSeconds / 60)).padStart(2, '0');
+          const s = String(recordingSeconds % 60).padStart(2, '0');
+          document.getElementById('rec-timer').textContent = `${m}:${s}`;
+        }, 1000);
+      } catch (err) {
+        alert('Brak dostępu do mikrofonu: ' + err.message);
+      }
+    }
+
+    // ── Chat ────────────────────────────────────────────────
+    async function sendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const msgs = document.getElementById('chat-messages');
+      msgs.innerHTML += `<div class="msg msg-user">${escapeHtml(text)}</div>`;
+      input.value = '';
+      msgs.scrollTop = msgs.scrollHeight;
+
+      try {
+        const data = await api('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({query: text, user_id: currentUser?.id || 'default_user'})
+        });
+        const sources = (data.sources || []).map(s => `${s.meeting_title} (${s.meeting_date})`).join(', ');
+        const sourceHtml = sources ? `<span class="msg-source">Źródła: ${escapeHtml(sources)}</span>` : '';
+        msgs.innerHTML += `<div class="msg msg-ai">${escapeHtml(data.answer || 'Brak odpowiedzi')}${sourceHtml}</div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+      } catch (e) {
+        msgs.innerHTML += `<div class="msg msg-ai" style="color:red">Błąd połączenia z API</div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+
+    // ── Inbox ───────────────────────────────────────────────
+    async function loadInbox() {
+      const list = document.getElementById('inbox-list');
+      list.innerHTML = '<p style="color:var(--color-text-tertiary); padding:20px;">Ładowanie...</p>';
+      try {
+        const items = await api('/api/inbox?user_id=' + (currentUser?.id || 'default_user'));
+        document.getElementById('inbox-badge').textContent = items.length;
+        if (!items.length) {
+          list.innerHTML = '<p style="color:var(--color-text-tertiary); padding:20px;">Inbox jest pusty.</p>';
+          return;
+        }
+        list.innerHTML = items.map(i => `
+          <div class="card">
+            <div class="card-row">
+              <div style="flex:1">
+                <span class="bank-pill bp-team">${escapeHtml(i.bank_id || '—')}</span>
+                <span style="font-size:11px; color:var(--color-text-tertiary)">propozycja od ${escapeHtml(i.proposed_by || 'AI')}</span>
+                <div class="card-title-txt">${escapeHtml(i.item_type)}: ${escapeHtml(i.content?.substring(0, 80) || '')}</div>
+                <div class="card-meta">${escapeHtml(i.created_at || '')}</div>
+                <div class="actions">
+                  <button class="act-btn approve" onclick="approveItem('${i.id}')">Zatwierdź</button>
+                  <button class="act-btn" onclick="rejectItem('${i.id}')">Odrzuć</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = '<p style="color:red; padding:20px;">Błąd ładowania inboxu</p>';
+      }
+    }
+
+    async function approveItem(id) {
+      showToast('Zatwierdzanie... (mock)');
+    }
+    async function rejectItem(id) {
+      showToast('Odrzucanie... (mock)');
+    }
+
+    // ── Meeting submission ──────────────────────────────────
+    async function submitMeeting() {
+      const title = document.getElementById('m-title').value;
+      const type = document.getElementById('m-type').value;
+      const participants = document.getElementById('m-participants').value;
+      const result = document.getElementById('m-result');
+
+      if (!title) { result.textContent = 'Uzupełnij tytuł!'; return; }
+
+      result.textContent = 'Przesyłanie...\n';
+
+      try {
+        let meetingId = null;
+
+        if (meetingSource === 'text') {
+          const transcript = document.getElementById('m-transcript').value;
+          const data = await api('/api/meetings', {
+            method: 'POST',
+            body: JSON.stringify({title, meeting_type: type, participants: participants.split(',').map(s=>s.trim()), transcript})
+          });
+          meetingId = data.meeting_id;
+        } else if (meetingSource === 'upload') {
+          const fileInput = document.getElementById('m-file');
+          if (!fileInput.files.length) { result.textContent += 'Wybierz plik!\n'; return; }
+          const form = new FormData();
+          form.append('title', title);
+          form.append('meeting_type', type);
+          form.append('participants', participants);
+          form.append('file', fileInput.files[0]);
+          const headers = {};
+          if (token) headers['Authorization'] = 'Bearer ' + token;
+          const res = await fetch(API + '/api/meetings/upload', {method: 'POST', headers, body: form});
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          meetingId = data.meeting_id;
+        } else if (meetingSource === 'record') {
+          if (!recordedChunks.length) { result.textContent += 'Najpierw nagraj audio!\n'; return; }
+          const blob = new Blob(recordedChunks, {type: 'audio/webm'});
+          const form = new FormData();
+          form.append('title', title);
+          form.append('meeting_type', type);
+          form.append('participants', participants);
+          form.append('file', blob, 'recording.webm');
+          const headers = {};
+          if (token) headers['Authorization'] = 'Bearer ' + token;
+          const res = await fetch(API + '/api/meetings/upload', {method: 'POST', headers, body: form});
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          meetingId = data.meeting_id;
+        }
+
+        result.textContent += `Meeting ID: ${meetingId}\nPrzetwarzanie przez AI...\n`;
+        const procData = await api(`/api/meetings/${meetingId}/process`, {method: 'POST'});
+        result.textContent += `\n✅ Przetworzone!\n`;
+        result.textContent += `Destynacje: ${procData.destinations.map(d=>d.bank_id).join(', ')}\n`;
+        result.textContent += `Decyzje: ${procData.extracted?.decisions?.length || 0}\n`;
+        result.textContent += `Zadania: ${procData.extracted?.action_items?.length || 0}\n`;
+        showToast('Spotkanie przetworzone! Sprawdź Inbox.');
+      } catch (e) {
+        result.textContent += `\n❌ Błąd: ${e.message}`;
+      }
+    }
+
+    // ── Search ──────────────────────────────────────────────
+    async function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      const out = document.getElementById('search-results');
+      if (!q) return;
+      out.innerHTML = '<p style="color:var(--color-text-tertiary)">Szukanie...</p>';
+      try {
+        const data = await api('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({query: q, user_id: currentUser?.id || 'default_user'})
+        });
+        const sources = (data.sources || []).map(s =>
+          `<span class="bank-pill bp-team">${escapeHtml(s.bank_id)}</span> ${escapeHtml(s.meeting_title)}`
+        ).join(' ');
+        out.innerHTML = `
+          <div class="card">
+            <div class="card-title-txt">Odpowiedź</div>
+            <div class="card-body">${escapeHtml(data.answer)}</div>
+            <div class="card-meta">${sources}</div>
+          </div>
+        `;
+      } catch (e) {
+        out.innerHTML = '<p style="color:red">Błąd wyszukiwania</p>';
+      }
+    }
+
+    // ── Notes ───────────────────────────────────────────────
+    async function loadNotes() {
+      const out = document.getElementById('notes-list');
+      try {
+        const meetings = await api('/api/meetings');
+        if (!meetings.length) {
+          out.innerHTML = '<p style="color:var(--color-text-tertiary); padding:20px;">Brak notatek.</p>';
+          return;
+        }
+        out.innerHTML = meetings.map(m => `
+          <div class="card">
+            <div class="card-row">
+              <div style="flex:1">
+                <span class="bank-pill bp-team">${escapeHtml(m.meeting_type)}</span>
+                <div class="card-title-txt">${escapeHtml(m.title)}</div>
+                <div class="card-meta">${escapeHtml(m.date)} · ${escapeHtml(m.status)}</div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        out.innerHTML = '<p style="color:red; padding:20px;">Błąd ładowania notatek</p>';
+      }
+    }
+
+    // ── Admin ───────────────────────────────────────────────
+    async function loadAdmin() {
+      try {
+        const stats = await api('/api/admin/stats');
+        document.getElementById('stat-users').textContent = stats.users;
+        document.getElementById('stat-meetings').textContent = stats.meetings;
+        document.getElementById('stat-inbox-pending').textContent = stats.inbox_pending;
+        document.getElementById('stat-inbox-total').textContent = stats.inbox_total;
+
+        const users = await api('/api/users');
+        const list = document.getElementById('users-list');
+        if (!users.length) {
+          list.innerHTML = '<p style="color:var(--color-text-tertiary); padding:12px;">Brak użytkowników.</p>';
+          return;
+        }
+        list.innerHTML = `
+          <table class="table">
+            <thead><tr><th>ID</th><th>Imię</th><th>Email</th><th>Rola</th><th>Zespół</th><th>ACL</th></tr></thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td>${escapeHtml(u.id)}</td>
+                  <td>${escapeHtml(u.name)}</td>
+                  <td>${escapeHtml(u.email || '')}</td>
+                  <td>${escapeHtml(u.role || '')}</td>
+                  <td>${escapeHtml(u.team || '')}</td>
+                  <td><button class="act-btn" onclick="showACL('${u.id}')">Pokaż</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function createUser() {
+      const payload = {
+        user_id: document.getElementById('u-id').value,
+        name: document.getElementById('u-name').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value,
+        team: document.getElementById('u-team').value,
+        company: document.getElementById('u-company').value,
+      };
+      try {
+        await api('/api/users', {method: 'POST', body: JSON.stringify(payload)});
+        showToast('Użytkownik dodany!');
+        loadAdmin();
+      } catch (e) {
+        showToast('Błąd dodawania użytkownika');
+      }
+    }
+
+    async function showACL(userId) {
+      try {
+        const acl = await api('/api/users/' + userId + '/acl');
+        alert('ACL dla ' + userId + ':\n' + acl.map(a => `${a.bank_id}: ${a.role}`).join('\n'));
+      } catch (e) {
+        alert('Błąd pobierania ACL');
+      }
+    }
+
+    function escapeHtml(t) {
+      if (!t) return '';
+      return t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // ── Auth ────────────────────────────────────────────────
+    let token = localStorage.getItem('wenetbrain_token');
+    let currentUser = null;
+
+    function setToken(t) {
+      token = t;
+      if (t) localStorage.setItem('wenetbrain_token', t);
+      else localStorage.removeItem('wenetbrain_token');
+    }
+
+    async function api(path, opts={}) {
+      const headers = {'Content-Type': 'application/json'};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + path, {...opts, headers: {...headers, ...opts.headers}});
+      if (res.status === 401) {
+        setToken(null);
+        window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+        return;
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Błąd ' + res.status);
+      }
+      return res.status === 204 ? null : res.json();
+    }
+
+    function logout() {
+      setToken(null);
+      window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+    }
+
+    async function initApp() {
+      try {
+        currentUser = await api('/api/auth/me');
+      } catch (e) {
+        setToken(null);
+        window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+        return;
+      }
+      document.getElementById('app-layout').classList.remove('hidden');
+      document.getElementById('current-user-display').textContent = currentUser.name || currentUser.id;
+      loadInbox();
+    }
+
+    if (!token) {
+      window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>

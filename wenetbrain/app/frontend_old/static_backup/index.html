@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WenetBrain</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F9FAFB;
+      --bg-tertiary: #F3F4F6;
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-tertiary: #9CA3AF;
+      --border-primary: #E5E7EB;
+      --border-secondary: #D1D5DB;
+      --accent: #378ADD;
+      --accent-hover: #2D6FC7;
+      --success: #1D9E75;
+      --warning: #F59E0B;
+      --danger: #E24B4A;
+      --info: #6366F1;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 52px 1fr;
+      height: 100vh;
+    }
+
+    /* Topbar */
+    .topbar {
+      grid-column: 1 / 3;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-primary);
+      background: var(--bg-primary);
+      z-index: 50;
+    }
+    .topbar-logo { font-size: 15px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; }
+    .search-bar {
+      flex: 1;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-bar:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.08);
+    }
+    .search-bar input {
+      flex: 1;
+      border: none; background: transparent;
+      font-size: 13px; color: var(--text-primary); outline: none;
+    }
+    .search-bar input::placeholder { color: var(--text-tertiary); }
+    .search-bar .material-icons-outlined { font-size: 18px; color: var(--text-tertiary); }
+    .topbar-spacer { flex: 1; }
+    .topbar-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; padding: 6px 12px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-secondary); background: white;
+      color: var(--text-primary); cursor: pointer; transition: all 0.2s;
+    }
+    .topbar-btn:hover { background: var(--bg-secondary); }
+    .topbar-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .topbar-btn.primary:hover { background: var(--accent-hover); }
+    .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+    .rec-dot.pulse { animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid var(--border-primary);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: var(--bg-secondary);
+      overflow-y: auto;
+    }
+    .nav-section {
+      font-size: 10px; color: var(--text-tertiary);
+      padding: 12px 8px 4px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 7px 8px;
+      border-radius: var(--radius-md); cursor: pointer;
+      font-size: 13px; color: var(--text-secondary); text-decoration: none;
+      transition: all 0.15s; position: relative;
+    }
+    .nav-item .material-icons-outlined { font-size: 18px; color: var(--text-tertiary); transition: color 0.15s; }
+    .nav-item:hover { background: white; color: var(--text-primary); }
+    .nav-item:hover .material-icons-outlined { color: var(--text-secondary); }
+    .nav-item.active { background: white; color: var(--text-primary); font-weight: 600; box-shadow: var(--shadow-sm); }
+    .nav-item.active .material-icons-outlined { color: var(--accent); }
+    .space-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .badge-num {
+      margin-left: auto; font-size: 11px; padding: 1px 7px; border-radius: 10px;
+      background: #FEE2E2; color: #991B1B; font-weight: 600;
+    }
+    .add-note-btn {
+      margin: 8px 8px 4px; padding: 6px; border-radius: var(--radius-md);
+      border: 1px dashed var(--border-secondary); background: transparent;
+      color: var(--text-tertiary); font-size: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .add-note-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(55,138,221,0.04); }
+
+    /* Main */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      overflow: hidden;
+      background: var(--bg-primary);
+    }
+    .content {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .content-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .content-title { font-size: 18px; font-weight: 700; }
+    .content-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      border: 1px solid var(--border-primary);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .card:hover { box-shadow: var(--shadow-sm); }
+    .card-row { display: flex; align-items: flex-start; gap: 12px; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 2px 0; }
+    .card-body { font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.6; }
+    .card-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 10px; display: flex; gap: 12px; align-items: center; }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    /* Pills */
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+    }
+    .pill-note { background: #E0E7FF; color: #3730A3; }
+    .pill-meeting { background: #D1FAE5; color: #065F46; }
+    .pill-task { background: #DBEAFE; color: #1E40AF; }
+    .pill-pending { background: #FEF3C7; color: #92400E; }
+    .pill-approved { background: #D1FAE5; color: #065F46; }
+    .pill-rejected { background: #FEE2E2; color: #991B1B; }
+
+    /* Buttons */
+    .btn {
+      font-size: 12px; padding: 5px 12px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-secondary); background: white;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn:hover { background: var(--bg-secondary); }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: white; border-color: var(--success); }
+    .btn-success:hover { opacity: 0.9; }
+    .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; border-color: transparent; }
+    .btn-ghost:hover { background: var(--bg-tertiary); }
+    .btn-sm { padding: 3px 8px; font-size: 11px; }
+
+    /* Forms */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border-secondary);
+      border-radius: var(--radius-md); font-size: 13px; font-family: inherit;
+      background: white; color: var(--text-primary); transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.08);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Chat */
+    .chat-area {
+      border-left: 1px solid var(--border-primary);
+      display: flex; flex-direction: column;
+      background: var(--bg-primary);
+    }
+    .chat-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border-primary);
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      background: var(--bg-secondary);
+    }
+    .chat-messages {
+      flex: 1; padding: 16px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg { font-size: 13px; line-height: 1.5; padding: 10px 14px; border-radius: var(--radius-md); max-width: 92%; }
+    .msg-user { background: #EFF6FF; color: #1E40AF; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg-ai { background: var(--bg-secondary); color: var(--text-primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border-primary); }
+    .msg-source { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; display: block; }
+    .chat-input {
+      padding: 14px; border-top: 1px solid var(--border-primary);
+      display: flex; gap: 8px; background: white;
+    }
+    .chat-input input {
+      flex: 1; font-size: 13px; padding: 8px 12px;
+      border-radius: var(--radius-md); border: 1px solid var(--border-secondary);
+      background: var(--bg-secondary); color: var(--text-primary); outline: none;
+    }
+    .chat-input input:focus { border-color: var(--accent); }
+    .chat-input button {
+      padding: 8px 14px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-secondary); background: white;
+      color: var(--text-primary); cursor: pointer; font-size: 13px;
+    }
+    .chat-input button:hover { background: var(--bg-secondary); }
+
+    /* Utility */
+    .hidden { display: none !important; }
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--text-tertiary);
+    }
+    .empty-state .material-icons-outlined { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      padding: 12px 18px; border-radius: var(--radius-md);
+      font-size: 13px; z-index: 1000; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; box-shadow: var(--shadow-lg); font-weight: 500;
+    }
+    .toast.show { opacity: 1; }
+    .toast.info { background: var(--text-primary); color: white; }
+    .toast.success { background: var(--success); color: white; }
+    .toast.error { background: var(--danger); color: white; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 20px;
+    }
+    .modal-card {
+      background: white; border-radius: var(--radius-lg);
+      padding: 24px; width: 100%; max-width: 520px;
+      border: 1px solid var(--border-primary); box-shadow: var(--shadow-lg);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); padding: 4px; border-radius: var(--radius-sm); }
+    .modal-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    /* Settings */
+    .settings-nav { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border-primary); padding-bottom: 4px; }
+    .settings-nav-item {
+      padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: var(--radius-md);
+      color: var(--text-secondary); transition: all 0.15s;
+    }
+    .settings-nav-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .settings-nav-item.active { background: var(--bg-secondary); color: var(--text-primary); font-weight: 600; }
+    .integration-card {
+      display: flex; align-items: center; gap: 16px; padding: 16px;
+      border: 1px solid var(--border-primary); border-radius: var(--radius-lg);
+      background: var(--bg-secondary); margin-bottom: 12px;
+    }
+    .integration-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: white; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-primary); }
+    .integration-icon .material-icons-outlined { font-size: 20px; color: var(--accent); }
+    .integration-info { flex: 1; }
+    .integration-name { font-size: 14px; font-weight: 600; }
+    .integration-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* Recording */
+    .recording-bar {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+    }
+    .recording-timer { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--danger); }
+    .upload-zone {
+      border: 2px dashed var(--border-secondary); border-radius: var(--radius-lg);
+      padding: 32px; text-align: center; color: var(--text-tertiary); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-zone:hover { border-color: var(--accent); color: var(--accent); background: rgba(55,138,221,0.02); }
+
+    /* Tooltip */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip); position: absolute; bottom: calc(100% + 6px); left: 50%;
+      transform: translateX(-50%) scale(0.95); padding: 6px 10px;
+      background: var(--text-primary); color: white; font-size: 11px; border-radius: var(--radius-sm);
+      white-space: nowrap; opacity: 0; pointer-events: none; transition: all 0.15s;
+      z-index: 200;
+    }
+    [data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+  </style>
+</head>
+<body>
+  <div id="app-layout" class="layout hidden">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-logo">WenetBrain</span>
+      <div class="search-bar">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" id="global-search" placeholder="Wyszukaj notatki..." onkeydown="if(event.key==='Enter')doGlobalSearch()">
+      </div>
+      <div class="topbar-spacer"></div>
+      <button class="topbar-btn primary" id="rec-btn" onclick="openMeetingModal()">
+        <span class="rec-dot" id="rec-dot"></span>
+        <span id="rec-text">Nagraj spotkanie</span>
+      </button>
+      <span class="topbar-btn" id="current-user-display">—</span>
+      <button class="topbar-btn" onclick="logout()">Wyloguj</button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section">Przestrzenie</div>
+      <div id="spaces-list">
+        <div class="nav-item active" onclick="showSpace('all', this)">
+          <span class="material-icons-outlined">folder_open</span> Wszystkie notatki
+        </div>
+      </div>
+      <button class="add-note-btn" onclick="openNoteModal()">
+        <span class="material-icons-outlined" style="font-size:16px">add</span> Nowa notatka
+      </button>
+
+      <div class="nav-section" style="margin-top:12px">Menu</div>
+      <div class="nav-item" onclick="showTab('inbox')">
+        <span class="material-icons-outlined">inbox</span> Inbox
+        <span class="badge-num" id="sidebar-inbox-badge">0</span>
+      </div>
+      <div class="nav-item" onclick="showTab('settings')">
+        <span class="material-icons-outlined">settings</span> Ustawienia
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <!-- CONTENT -->
+      <div class="content" id="content-area">
+        <!-- Space / Notes View -->
+        <div id="view-notes">
+          <div class="content-header">
+            <div>
+              <div class="content-title" id="notes-title">Wszystkie notatki</div>
+              <div class="content-subtitle" id="notes-subtitle">Notatki ze wszystkich przestrzeni</div>
+            </div>
+          </div>
+          <div id="notes-list">
+            <div class="empty-state">
+              <span class="material-icons-outlined">description</span>
+              <div class="empty-state-title">Brak notatek</div>
+              <div>Dodaj pierwszą notatkę lub przetwórz spotkanie</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inbox View -->
+        <div id="view-inbox" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">Inbox</div>
+              <div class="content-subtitle">Zatwierdź zadania, spotkania i decyzje</div>
+            </div>
+          </div>
+          <div id="inbox-list">
+            <div class="empty-state">
+              <span class="material-icons-outlined">inbox</span>
+              <div class="empty-state-title">Inbox jest pusty</div>
+              <div>Przetwórz spotkanie, aby zobaczyć propozycje</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">Ustawienia</div>
+              <div class="content-subtitle">Twoje konto i integracje</div>
+            </div>
+          </div>
+          <div class="settings-nav">
+            <div class="settings-nav-item active" onclick="showSettingsTab('account', this)">Konto</div>
+            <div class="settings-nav-item" onclick="showSettingsTab('integrations', this)">Integracje</div>
+          </div>
+          <div id="settings-account">
+            <div class="card" style="max-width:480px">
+              <div class="form-group">
+                <label>Imię i nazwisko</label>
+                <input type="text" id="s-name" placeholder="Jan Kowalski">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="s-email" placeholder="jan@webwave.pl">
+              </div>
+              <div class="form-group">
+                <label>Zespół</label>
+                <input type="text" id="s-team" placeholder="Product">
+              </div>
+              <button class="btn btn-primary" onclick="saveSettings()">Zapisz zmiany</button>
+            </div>
+          </div>
+          <div id="settings-integrations" class="hidden">
+            <div class="integration-card">
+              <div class="integration-icon"><span class="material-icons-outlined">task_alt</span></div>
+              <div class="integration-info">
+                <div class="integration-name">ClickUp</div>
+                <div class="integration-desc">Eksportuj zadania do listy ClickUp</div>
+              </div>
+              <button class="btn btn-sm" onclick="connectClickUp()">Połącz</button>
+            </div>
+            <div class="integration-card">
+              <div class="integration-icon"><span class="material-icons-outlined">calendar_today</span></div>
+              <div class="integration-info">
+                <div class="integration-name">Microsoft Outlook</div>
+                <div class="integration-desc">Synchronizuj spotkania z kalendarzem</div>
+              </div>
+              <button class="btn btn-sm" onclick="connectOutlook()">Połącz</button>
+            </div>
+            <div class="card" style="max-width:480px; margin-top:16px">
+              <div class="form-group">
+                <label>ClickUp — ID listy (personal list)</label>
+                <input type="text" id="s-clickup-list" placeholder="np. 123456789">
+              </div>
+              <button class="btn btn-primary" onclick="saveIntegrationSettings()">Zapisz integracje</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="view-search" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">Wyniki wyszukiwania</div>
+              <div class="content-subtitle" id="search-query-display"></div>
+            </div>
+          </div>
+          <div id="search-results"></div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="chat-area">
+        <div class="chat-header">Asystent WenetBrain</div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg msg-ai">Witaj! Jestem Twoim asystentem wiedzy organizacyjnej. W czym mogę pomóc?</div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="Zapytaj o coś..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button onclick="sendChat()"><span class="material-icons-outlined" style="font-size:18px">arrow_upward</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meeting Modal -->
+  <div id="meeting-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeMeetingModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Nowe spotkanie</span>
+        <span class="material-icons-outlined modal-close" onclick="closeMeetingModal()">close</span>
+      </div>
+      <div class="form-group">
+        <label>Tytuł</label>
+        <input type="text" id="m-title" placeholder="np. Sprint Planning">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Typ</label>
+          <select id="m-type" onchange="onMeetingTypeChange()">
+            <option value="company">{firma}</option>
+            <option value="team">{zespół}</option>
+            <option value="private">Prywatne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Uczestnicy</label>
+          <input type="text" id="m-participants" placeholder="Anna, Marek">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Źródło</label>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="btn btn-primary" id="btn-source-record" onclick="setMeetingSource('record')">
+            <span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">mic</span>Nagraj teraz
+          </button>
+          <button class="btn" id="btn-source-upload" onclick="setMeetingSource('upload')">
+            <span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">upload_file</span>Załącz plik
+          </button>
+        </div>
+      </div>
+      <div id="source-record" class="hidden">
+        <div class="upload-zone" id="record-zone" onclick="toggleRecording()">
+          <span class="material-icons-outlined" style="font-size:32px" id="record-icon">mic</span>
+          <div style="margin-top:8px; font-size:13px; font-weight:500;" id="record-label">Kliknij aby nagrać z mikrofonu i systemu</div>
+          <div style="margin-top:4px; font-size:11px; color:var(--text-tertiary)">Użyje mikrofonu + dźwięk z komputera</div>
+        </div>
+        <div id="recording-ui" class="recording-bar hidden" style="margin-top:12px">
+          <span class="rec-dot pulse"></span>
+          <span class="recording-timer" id="rec-timer">00:00</span>
+          <span style="font-size:12px; color:var(--text-tertiary)">Nagrywanie...</span>
+          <button class="btn btn-danger btn-sm" onclick="toggleRecording()">Zatrzymaj</button>
+        </div>
+        <audio id="recorded-audio" controls style="width:100%; margin-top:8px; display:none;"></audio>
+      </div>
+      <div id="source-upload" class="hidden">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('m-file').click()">
+          <span class="material-icons-outlined" style="font-size:32px">upload_file</span>
+          <div style="margin-top:8px; font-size:13px; font-weight:500;">Kliknij lub przeciągnij plik</div>
+          <div style="margin-top:4px; font-size:11px; color:var(--text-tertiary)">WAV, MP3, M4A, TXT</div>
+        </div>
+        <input type="file" id="m-file" accept=".wav,.mp3,.m4a,.txt" style="display:none;" onchange="onFileSelected(this)">
+        <div id="upload-file-info" style="margin-top:8px; font-size:12px; color:var(--text-secondary); display:none;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeMeetingModal()">Anuluj</button>
+        <button class="btn btn-primary" onclick="submitMeeting()">Przetwórz przez AI</button>
+      </div>
+      <pre id="m-result" style="margin-top:12px; font-size:11px; color:var(--text-secondary); white-space:pre-wrap;"></pre>
+    </div>
+  </div>
+
+  <!-- Note Modal -->
+  <div id="note-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeNoteModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Nowa notatka</span>
+        <span class="material-icons-outlined modal-close" onclick="closeNoteModal()">close</span>
+      </div>
+      <div class="form-group">
+        <label>Przestrzeń</label>
+        <select id="n-space"></select>
+      </div>
+      <div class="form-group">
+        <label>Tytuł</label>
+        <input type="text" id="n-title" placeholder="Tytuł notatki">
+      </div>
+      <div class="form-group">
+        <label>Treść</label>
+        <textarea id="n-body" rows="5" placeholder="Treść notatki..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeNoteModal()">Anuluj</button>
+        <button class="btn btn-primary" onclick="submitNote()">Zapisz notatkę</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = 'http://localhost:8000';
+    let token = localStorage.getItem('wenetbrain_token');
+    let currentUser = null;
+    let currentSpace = 'all';
+    let spaces = [];
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordingInterval = null;
+    let recordingSeconds = 0;
+    let meetingSource = 'text';
+
+    function showToast(msg, type='info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    function setToken(t) {
+      token = t;
+      if (t) localStorage.setItem('wenetbrain_token', t);
+      else localStorage.removeItem('wenetbrain_token');
+    }
+
+    async function api(path, opts={}) {
+      const headers = {'Content-Type': 'application/json'};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + path, {...opts, headers: {...headers, ...opts.headers}});
+      if (res.status === 401) {
+        setToken(null);
+        window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+        return;
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Błąd ' + res.status);
+      }
+      return res.status === 204 ? null : res.json();
+    }
+
+    function logout() {
+      setToken(null);
+      window.location.href = '/login.html?api=' + encodeURIComponent(API) + '&app=Aplikacja&redirect=/&key=wenetbrain_token';
+    }
+
+    async function initApp() {
+      try {
+        currentUser = await api('/api/auth/me');
+      } catch (e) { setToken(null); logout(); return; }
+      document.getElementById('app-layout').classList.remove('hidden');
+      document.getElementById('current-user-display').textContent = currentUser.name || currentUser.id;
+      await loadSpaces();
+      loadNotes('all');
+      loadInbox();
+    }
+
+    if (!token) { logout(); } else { initApp(); }
+
+    // Drag & drop for upload zone
+    (function() {
+      const zone = document.getElementById('upload-zone');
+      if (!zone) return;
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--accent)'; zone.style.background = 'rgba(55,138,221,0.04)'; });
+      zone.addEventListener('dragleave', e => { e.preventDefault(); zone.style.borderColor = ''; zone.style.background = ''; });
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.style.borderColor = ''; zone.style.background = '';
+        const files = e.dataTransfer.files;
+        if (files.length) {
+          const input = document.getElementById('m-file');
+          const dt = new DataTransfer();
+          dt.items.add(files[0]);
+          input.files = dt.files;
+          onFileSelected(input);
+        }
+      });
+    })();
+
+    // ── Spaces & Notes ──────────────────────────────────────
+    async function loadSpaces() {
+      try {
+        spaces = await api('/api/my/spaces') || [];
+        const list = document.getElementById('spaces-list');
+        let html = `<div class="nav-item ${currentSpace==='all'?'active':''}" onclick="showSpace('all', this)"><span class="material-icons-outlined">folder_open</span> Wszystkie notatki</div>`;
+        spaces.forEach(s => {
+          const color = s.space_type === 'company' ? '#185FA5' : s.space_type === 'team' ? '#1D9E75' : s.space_type === 'group' ? '#3C3489' : '#993C1D';
+          html += `<div class="nav-item ${currentSpace===s.bank_id?'active':''}" onclick="showSpace('${s.bank_id}', this)" data-tooltip="${escapeHtml(s.name)}"><span class="space-dot" style="background:${color}"></span> ${escapeHtml(s.name)}</div>`;
+        });
+        list.innerHTML = html;
+        // Populate note modal select
+        const sel = document.getElementById('n-space');
+        sel.innerHTML = spaces.map(s => `<option value="${s.bank_id}">${escapeHtml(s.name)}</option>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    function showSpace(bankId, el) {
+      currentSpace = bankId;
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      showView('notes');
+      loadNotes(bankId);
+    }
+
+    async function loadNotes(bankId) {
+      const title = document.getElementById('notes-title');
+      const subtitle = document.getElementById('notes-subtitle');
+      const list = document.getElementById('notes-list');
+      if (bankId === 'all') {
+        title.textContent = 'Wszystkie notatki';
+        subtitle.textContent = 'Notatki ze wszystkich przestrzeni';
+      } else {
+        const sp = spaces.find(s => s.bank_id === bankId);
+        title.textContent = sp ? sp.name : bankId;
+        subtitle.textContent = 'Notatki w tej przestrzeni';
+      }
+      list.innerHTML = '<p style="color:var(--text-tertiary); padding:20px;">Ładowanie...</p>';
+      try {
+        let notes = [];
+        if (bankId === 'all') {
+          for (const s of spaces) {
+            const n = await api('/api/my/spaces/' + encodeURIComponent(s.bank_id) + '/notes');
+            if (n) notes.push(...n.map(x => ({...x, space_name: s.name})));
+          }
+        } else {
+          const n = await api('/api/my/spaces/' + encodeURIComponent(bankId) + '/notes');
+          if (n) notes = n.map(x => ({...x, space_name: spaces.find(s=>s.bank_id===bankId)?.name || bankId}));
+        }
+        notes.sort((a,b) => (b.payload?.created_at||'') > (a.payload?.created_at||'') ? 1 : -1);
+        if (!notes.length) {
+          list.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">description</span><div class="empty-state-title">Brak notatek</div><div>Dodaj pierwszą notatkę lub przetwórz spotkanie</div></div>`;
+          return;
+        }
+        list.innerHTML = notes.map(n => `
+          <div class="card">
+            <div class="card-row">
+              <div style="flex:1">
+                <span class="pill pill-note">${escapeHtml(n.space_name || 'notatka')}</span>
+                <span class="pill pill-pending">${escapeHtml(n.payload?.type || 'note')}</span>
+                <div class="card-title">${escapeHtml(n.payload?.title || n.text?.substring(0,60) || 'Notatka')}</div>
+                <div class="card-body">${escapeHtml(n.text || '')}</div>
+                <div class="card-meta">
+                  <span>${escapeHtml(n.payload?.user_id || '')}</span>
+                  <span>${escapeHtml(n.payload?.created_at?.substring(0,10) || '')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = '<p style="color:var(--danger); padding:20px;">Błąd ładowania notatek</p>';
+      }
+    }
+
+    function openNoteModal() {
+      document.getElementById('note-modal').classList.remove('hidden');
+      document.getElementById('n-title').value = '';
+      document.getElementById('n-body').value = '';
+    }
+    function closeNoteModal() { document.getElementById('note-modal').classList.add('hidden'); }
+
+    async function submitNote() {
+      const bankId = document.getElementById('n-space').value;
+      const title = document.getElementById('n-title').value;
+      const body = document.getElementById('n-body').value;
+      if (!title || !body) { showToast('Wypełnij tytuł i treść', 'error'); return; }
+      try {
+        await api('/api/my/spaces/' + encodeURIComponent(bankId) + '/notes', {
+          method: 'POST',
+          body: JSON.stringify({title, content: body})
+        });
+        showToast('Notatka dodana!', 'success');
+        closeNoteModal();
+        loadNotes(currentSpace);
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── View Switching ──────────────────────────────────────
+    function showView(name) {
+      ['notes','inbox','settings','search'].forEach(v => {
+        document.getElementById('view-' + v).classList.toggle('hidden', v !== name);
+      });
+    }
+
+    function showTab(id) {
+      showView(id);
+      if (id === 'inbox') loadInbox();
+    }
+
+    function showSettingsTab(id, el) {
+      document.getElementById('settings-account').classList.toggle('hidden', id !== 'account');
+      document.getElementById('settings-integrations').classList.toggle('hidden', id !== 'integrations');
+      document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    // ── Global Search ───────────────────────────────────────
+    async function doGlobalSearch() {
+      const q = document.getElementById('global-search').value.trim();
+      if (!q) return;
+      showView('search');
+      document.getElementById('search-query-display').textContent = '„' + q + '”';
+      const out = document.getElementById('search-results');
+      out.innerHTML = '<p style="color:var(--text-tertiary)">Szukanie...</p>';
+      try {
+        const results = await api('/api/search?q=' + encodeURIComponent(q));
+        if (!results || !results.length) {
+          out.innerHTML = '<div class="empty-state"><span class="material-icons-outlined">search</span><div class="empty-state-title">Brak wyników</div><div>Spróbuj innego zapytania</div></div>';
+          return;
+        }
+        out.innerHTML = results.map(r => `
+          <div class="card">
+            <div class="card-row">
+              <div style="flex:1">
+                <span class="pill pill-note">${escapeHtml(r.bank_id)}</span>
+                <span class="pill pill-pending">score: ${(r.score||0).toFixed(2)}</span>
+                <div class="card-title">${escapeHtml(r.payload?.title || r.payload?.chunk_text?.substring(0,60) || 'Notatka')}</div>
+                <div class="card-body">${escapeHtml(r.payload?.chunk_text || '')}</div>
+                <div class="card-meta">
+                  <span>${escapeHtml(r.payload?.meeting_title || r.payload?.user_id || '')}</span>
+                  <span>${escapeHtml(r.payload?.meeting_date || r.payload?.created_at?.substring(0,10) || '')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) { out.innerHTML = '<p style="color:var(--danger)">Błąd wyszukiwania</p>'; }
+    }
+
+    // ── Inbox ───────────────────────────────────────────────
+    async function loadInbox() {
+      const list = document.getElementById('inbox-list');
+      list.innerHTML = '<p style="color:var(--text-tertiary); padding:20px;">Ładowanie...</p>';
+      try {
+        const items = await api('/api/inbox?user_id=' + (currentUser?.id || 'default_user'));
+        document.getElementById('inbox-badge-count').textContent = items.length;
+        document.getElementById('sidebar-inbox-badge').textContent = items.length;
+        if (!items.length) {
+          list.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">inbox</span><div class="empty-state-title">Inbox jest pusty</div><div>Przetwórz spotkanie, aby zobaczyć propozycje</div></div>`;
+          return;
+        }
+        list.innerHTML = items.map(i => {
+          const content = typeof i.content === 'string' ? i.content : JSON.stringify(i.content);
+          const isTask = i.item_type === 'action_item';
+          const isEvent = i.item_type === 'calendar_event';
+          return `
+          <div class="card">
+            <div class="card-row">
+              <div style="flex:1">
+                <span class="pill ${isTask?'pill-task':isEvent?'pill-meeting':'pill-note'}">${escapeHtml(i.item_type)}</span>
+                <span class="pill pill-pending">${escapeHtml(i.bank_id || '—')}</span>
+                <div class="card-title">${escapeHtml(content?.substring(0, 100) || '')}</div>
+                <div class="card-meta">${escapeHtml(i.created_at || '')}</div>
+                <div class="card-actions">
+                  ${isTask ? `<button class="btn btn-success btn-sm" onclick="approveInboxItem('${i.id}', 'clickup')">Zatwierdź i dodaj do ClickUp</button>` : ''}
+                  ${isEvent ? `<button class="btn btn-success btn-sm" onclick="approveInboxItem('${i.id}', 'outlook')">Zatwierdź i dodaj do Outlook</button>` : ''}
+                  <button class="btn btn-ghost btn-sm" onclick="approveInboxItem('${i.id}', 'none')">Tylko zatwierdź</button>
+                  <button class="btn btn-danger btn-sm" onclick="rejectInboxItem('${i.id}')">Odrzuć</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        list.innerHTML = '<p style="color:var(--danger); padding:20px;">Błąd ładowania inboxu</p>';
+      }
+    }
+
+    async function approveInboxItem(id, action) {
+      try {
+        await api('/api/inbox/' + id + '/approve', {method: 'POST', body: JSON.stringify({action})});
+        showToast(action === 'clickup' ? 'Dodano do ClickUp!' : action === 'outlook' ? 'Dodano do Outlook!' : 'Zatwierdzono', 'success');
+        loadInbox();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function rejectInboxItem(id) {
+      try {
+        await api('/api/inbox/' + id + '/reject', {method: 'POST'});
+        showToast('Odrzucono', 'info');
+        loadInbox();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── Meeting Modal ───────────────────────────────────────
+    function openMeetingModal() {
+      document.getElementById('meeting-modal').classList.remove('hidden');
+      document.getElementById('m-title').value = '';
+      document.getElementById('m-file').value = '';
+      document.getElementById('upload-file-info').style.display = 'none';
+      document.getElementById('m-result').textContent = '';
+      // Reset recording UI
+      document.getElementById('recorded-audio').style.display = 'none';
+      document.getElementById('recording-ui').classList.add('hidden');
+      document.getElementById('rec-dot').classList.remove('pulse');
+      document.getElementById('rec-text').textContent = 'Nagraj spotkanie';
+      recordedChunks = [];
+      setMeetingSource('record');
+      onMeetingTypeChange();
+    }
+    function closeMeetingModal() {
+      document.getElementById('meeting-modal').classList.add('hidden');
+      if (mediaRecorder && mediaRecorder.state === 'recording') toggleRecording();
+    }
+    function onMeetingTypeChange() {
+      const type = document.getElementById('m-type').value;
+      // participants field always visible now
+    }
+    function setMeetingSource(src) {
+      meetingSource = src;
+      document.getElementById('source-record').classList.toggle('hidden', src !== 'record');
+      document.getElementById('source-upload').classList.toggle('hidden', src !== 'upload');
+      ['record','upload'].forEach(s => {
+        const btn = document.getElementById('btn-source-' + s);
+        btn.classList.toggle('btn-primary', s === src);
+        btn.classList.toggle('btn-ghost', s !== src);
+      });
+    }
+    function onFileSelected(input) {
+      const info = document.getElementById('upload-file-info');
+      if (input.files && input.files.length) {
+        info.textContent = 'Wybrano: ' + input.files[0].name + ' (' + Math.round(input.files[0].size / 1024) + ' KB)';
+        info.style.display = 'block';
+      } else {
+        info.style.display = 'none';
+      }
+    }
+
+    // ── Recording ───────────────────────────────────────────
+    async function toggleRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        return;
+      }
+      try {
+        // Try to capture system audio via screen share + microphone
+        let displayStream = null;
+        let micStream = null;
+        try {
+          displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        } catch (e) {
+          // User cancelled screen share or not supported — proceed with mic only
+        }
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          if (!displayStream || !displayStream.getAudioTracks().length) {
+            throw new Error('Brak dostępu do mikrofonu: ' + e.message);
+          }
+        }
+        // Combine tracks
+        const tracks = [];
+        if (displayStream) tracks.push(...displayStream.getTracks());
+        if (micStream) tracks.push(...micStream.getTracks());
+        const combinedStream = new MediaStream(tracks);
+
+        mediaRecorder = new MediaRecorder(combinedStream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const audio = document.getElementById('recorded-audio');
+          audio.src = url; audio.style.display = 'block';
+          document.getElementById('recording-ui').classList.add('hidden');
+          document.getElementById('rec-dot').classList.remove('pulse');
+          document.getElementById('rec-text').textContent = 'Nagraj spotkanie';
+          document.getElementById('record-label').textContent = 'Kliknij aby nagrać z mikrofonu i systemu';
+          document.getElementById('record-icon').textContent = 'mic';
+          clearInterval(recordingInterval);
+          combinedStream.getTracks().forEach(t => t.stop());
+          showToast('Nagranie zapisane', 'success');
+        };
+        mediaRecorder.start();
+        recordingSeconds = 0;
+        document.getElementById('recording-ui').classList.remove('hidden');
+        document.getElementById('rec-dot').classList.add('pulse');
+        document.getElementById('rec-text').textContent = 'Zatrzymaj nagrywanie';
+        document.getElementById('record-label').textContent = 'Nagrywanie w toku...';
+        document.getElementById('record-icon').textContent = 'stop_circle';
+        recordingInterval = setInterval(() => {
+          recordingSeconds++;
+          const m = String(Math.floor(recordingSeconds / 60)).padStart(2, '0');
+          const s = String(recordingSeconds % 60).padStart(2, '0');
+          document.getElementById('rec-timer').textContent = `${m}:${s}`;
+        }, 1000);
+      } catch (err) {
+        showToast(err.message || 'Błąd nagrywania', 'error');
+      }
+    }
+
+    // ── Meeting Submission ──────────────────────────────────
+    async function submitMeeting() {
+      const title = document.getElementById('m-title').value;
+      const type = document.getElementById('m-type').value;
+      const participants = document.getElementById('m-participants').value;
+      const result = document.getElementById('m-result');
+      if (!title) { result.textContent = 'Uzupełnij tytuł!'; return; }
+      result.textContent = 'Przesyłanie...\n';
+      try {
+        let meetingId = null;
+        if (meetingSource === 'upload') {
+          const fileInput = document.getElementById('m-file');
+          if (!fileInput.files.length) { result.textContent += 'Wybierz plik!\n'; return; }
+          const form = new FormData();
+          form.append('title', title); form.append('meeting_type', type); form.append('participants', participants);
+          form.append('file', fileInput.files[0]);
+          const headers = {}; if (token) headers['Authorization'] = 'Bearer ' + token;
+          const res = await fetch(API + '/api/meetings/upload', {method: 'POST', headers, body: form});
+          if (!res.ok) throw new Error('Upload failed');
+          meetingId = (await res.json()).meeting_id;
+        } else if (meetingSource === 'record') {
+          if (!recordedChunks.length) { result.textContent += 'Najpierw nagraj audio!\n'; return; }
+          const blob = new Blob(recordedChunks, {type: 'audio/webm'});
+          const form = new FormData();
+          form.append('title', title); form.append('meeting_type', type); form.append('participants', participants);
+          form.append('file', blob, 'recording.webm');
+          const headers = {}; if (token) headers['Authorization'] = 'Bearer ' + token;
+          const res = await fetch(API + '/api/meetings/upload', {method: 'POST', headers, body: form});
+          if (!res.ok) throw new Error('Upload failed');
+          meetingId = (await res.json()).meeting_id;
+        }
+        result.textContent += `Meeting ID: ${meetingId}\nPrzetwarzanie przez AI...\n`;
+        const procData = await api(`/api/meetings/${meetingId}/process`, {method: 'POST'});
+        result.textContent += `\n✅ Przetworzone!\nDestynacje: ${procData.destinations.map(d=>d.bank_id).join(', ')}\nDecyzje: ${procData.extracted?.decisions?.length || 0}\nZadania: ${procData.extracted?.action_items?.length || 0}\n`;
+        showToast('Spotkanie przetworzone! Sprawdź Inbox.', 'success');
+        loadInbox();
+      } catch (e) { result.textContent += `\n❌ Błąd: ${e.message}`; }
+    }
+
+    // ── Settings ────────────────────────────────────────────
+    async function saveSettings() {
+      try {
+        await api('/api/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            name: document.getElementById('s-name').value,
+            email: document.getElementById('s-email').value,
+            team: document.getElementById('s-team').value
+          })
+        });
+        showToast('Ustawienia zapisane', 'success');
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+    function connectClickUp() { showToast('ClickUp — funkcja w przygotowaniu', 'info'); }
+    function connectOutlook() { showToast('Outlook — funkcja w przygotowaniu', 'info'); }
+    async function saveIntegrationSettings() {
+      try {
+        await api('/api/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({clickup_list_id: document.getElementById('s-clickup-list').value})
+        });
+        showToast('Integracje zapisane', 'success');
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // ── Chat ────────────────────────────────────────────────
+    async function sendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim(); if (!text) return;
+      const msgs = document.getElementById('chat-messages');
+      msgs.innerHTML += `<div class="msg msg-user">${escapeHtml(text)}</div>`;
+      input.value = ''; msgs.scrollTop = msgs.scrollHeight;
+      try {
+        const data = await api('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({query: text, user_id: currentUser?.id || 'default_user'})
+        });
+        const sources = (data.sources || []).map(s => `${s.meeting_title} (${s.meeting_date})`).join(', ');
+        const sourceHtml = sources ? `<span class="msg-source">Źródła: ${escapeHtml(sources)}</span>` : '';
+        msgs.innerHTML += `<div class="msg msg-ai">${escapeHtml(data.answer || 'Brak odpowiedzi')}${sourceHtml}</div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+      } catch (e) {
+        msgs.innerHTML += `<div class="msg msg-ai" style="color:var(--danger)">Błąd połączenia</div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+
+    function escapeHtml(t) {
+      if (!t) return '';
+      return t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+  </script>
+</body>
+</html>
